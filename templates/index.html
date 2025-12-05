@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBS Lot Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px 20px 20px 20px;
+        }
+
+        header {
+            background: white;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #34495e;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 500;
+        }
+
+        .admin-button:hover {
+            background: #2c3e50;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .logo {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a252f;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .screen {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            -webkit-appearance: none; /* Remove iOS default styling */
+            appearance: none;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #95a5a6;
+            box-shadow: 0 0 0 3px rgba(149, 165, 166, 0.1);
+        }
+
+        button {
+            background: #34495e;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        button:hover:not(:disabled) {
+            background: #2c3e50;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Touch-friendly improvements for mobile */
+        @media (hover: none) and (pointer: coarse) {
+            button {
+                min-height: 44px;
+                padding: 12px 16px;
+            }
+
+            input[type="text"],
+            select {
+                min-height: 44px;
+            }
+
+            .flashlight-button {
+                min-height: 50px;
+                min-width: 50px;
+            }
+
+            .admin-button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .part-item {
+                padding: 16px;
+                margin-bottom: 8px;
+            }
+
+            .modal-button {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #7f8c8d;
+        }
+
+        .camera-container {
+            margin: 20px 0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #f0f0f0;
+            position: relative;
+            height: 250px;
+            max-width: 100%;
+        }
+
+        .attempt-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .attempt-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            transition: all 0.3s ease;
+        }
+
+        .attempt-dot.active {
+            background: #f39c12;
+            box-shadow: 0 0 8px rgba(243, 156, 18, 0.6);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 400px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #95a5a6;
+            font-size: 14px;
+        }
+
+        .flashlight-button {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .flashlight-button:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .flashlight-button.active {
+            background: rgba(255, 193, 7, 0.8);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.6);
+        }
+
+        .flashlight-button.active:hover {
+            background: rgba(255, 193, 7, 0.9);
+        }
+
+        .capture-controls {
+            margin: 10px 0 15px 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #34495e;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeOverlay 0.3s ease;
+        }
+
+        @keyframes fadeOverlay {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            animation: iconBounce 0.6s ease;
+        }
+
+        @keyframes iconBounce {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .modal-message {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-button {
+            background: #34495e;
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-button:hover {
+            background: #2c3e50;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-form {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #34495e;
+            box-shadow: 0 0 0 3px rgba(52, 73, 94, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #95a5a6;
+        }
+
+        .admin-form-button {
+            background: #34495e;
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .admin-form-button:hover {
+            background: #2c3e50;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .admin-form-button.cancel {
+            background: #95a5a6;
+        }
+
+        .admin-form-button.cancel:hover {
+            background: #7f8c8d;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        .toggle-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #27ae60;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .admin-info {
+            background: #e8f4f8;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        .modal-button.success {
+            background: #27ae60;
+        }
+
+        .modal-button.success:hover {
+            background: #229954;
+        }
+
+        .modal-button.error {
+            background: #e74c3c;
+        }
+
+        .modal-button.error:hover {
+            background: #c0392b;
+        }
+
+        .part-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 3px solid #34495e;
+        }
+
+        .part-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .part-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .part-info-label {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .part-info-value {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .timer-display {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px;
+            background: #e8f4f8;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .scan-counter {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .scan-counter-number {
+            font-size: 32px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .scan-counter-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .extracted-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #2c3e50;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .extracted-text-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .action-buttons button {
+            width: 100%;
+        }
+
+        .btn-back {
+            background: #95a5a6;
+        }
+
+        .btn-back:hover {
+            background: #7f8c8d;
+        }
+
+        .parts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .part-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .part-item:hover {
+            border-color: #34495e;
+            background: #f8f9fa;
+            transform: translateX(4px);
+        }
+
+        .part-item-name {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .part-item-detail {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+                padding: 10px 12px 20px 12px;
+            }
+
+            header {
+                padding: 12px 0;
+                margin-bottom: 15px;
+            }
+
+            .header-content {
+                padding: 0 12px;
+                gap: 12px;
+            }
+
+            h1 {
+                font-size: 22px;
+                font-weight: 600;
+            }
+
+            .subtitle {
+                font-size: 12px;
+            }
+
+            .logo {
+                width: 40px;
+                height: 40px;
+            }
+
+            .screen {
+                padding: 15px 16px;
+                border-radius: 6px;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            input[type="text"],
+            select {
+                padding: 10px 12px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            button {
+                padding: 12px 16px;
+                font-size: 13px;
+                border-radius: 6px;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .action-buttons button {
+                width: 100%;
+            }
+
+            .modal {
+                max-width: 90%;
+                max-height: 90vh;
+                padding: 24px 16px;
+                overflow-y: auto;
+            }
+
+            .modal-icon {
+                font-size: 48px;
+                margin-bottom: 12px;
+            }
+
+            .modal-title {
+                font-size: 18px;
+            }
+
+            .modal-message {
+                font-size: 13px;
+            }
+
+            .part-info {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+
+            .part-info-row {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .scan-counter {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+
+            .scan-counter-number {
+                font-size: 28px;
+            }
+
+            .scan-counter-label {
+                font-size: 11px;
+            }
+
+            .camera-container {
+                height: 200px;
+                margin: 15px 0;
+            }
+
+            .video-placeholder {
+                height: 200px;
+                font-size: 12px;
+            }
+
+            .flashlight-button {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+                bottom: 12px;
+                right: 12px;
+            }
+
+            .capture-controls {
+                margin: 10px 0 12px 0;
+            }
+
+            .extracted-text {
+                padding: 12px;
+                font-size: 12px;
+                margin-bottom: 15px;
+            }
+
+            .extracted-text-label {
+                font-size: 11px;
+            }
+
+            .admin-button {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+                top: 12px;
+                right: 12px;
+            }
+
+            .timer-display {
+                font-size: 14px;
+                padding: 6px;
+            }
+
+            .part-item {
+                padding: 12px;
+            }
+
+            .part-item-name {
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+
+            .part-item-detail {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px 10px 15px 10px;
+            }
+
+            header {
+                padding: 10px 0;
+                margin-bottom: 12px;
+            }
+
+            .header-content {
+                padding: 0 10px;
+                gap: 10px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .subtitle {
+                font-size: 11px;
+                margin-top: 2px;
+            }
+
+            .logo {
+                width: 35px;
+                height: 35px;
+            }
+
+            .screen {
+                padding: 12px 14px;
+            }
+
+            label {
+                font-size: 12px;
+            }
+
+            input[type="text"],
+            select {
+                padding: 10px 10px;
+                font-size: 16px;
+                border-radius: 5px;
+            }
+
+            button {
+                padding: 11px 14px;
+                font-size: 12px;
+            }
+
+            .modal {
+                max-width: 95%;
+                padding: 20px 14px;
+                margin: 10px;
+            }
+
+            .modal-icon {
+                font-size: 44px;
+                margin-bottom: 10px;
+            }
+
+            .modal-title {
+                font-size: 16px;
+            }
+
+            .modal-message {
+                font-size: 12px;
+                margin-bottom: 16px;
+            }
+
+            .modal-button {
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+
+            .part-info {
+                padding: 10px;
+                border-left-width: 2px;
+            }
+
+            .part-info-row {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            .scan-counter {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+
+            .scan-counter-number {
+                font-size: 24px;
+            }
+
+            .scan-counter-label {
+                font-size: 10px;
+            }
+
+            .camera-container {
+                height: 180px;
+                margin: 12px 0;
+            }
+
+            .video-placeholder {
+                height: 180px;
+                font-size: 11px;
+            }
+
+            .flashlight-button {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+                bottom: 10px;
+                right: 10px;
+            }
+
+            .extracted-text {
+                padding: 10px;
+                font-size: 11px;
+                margin-bottom: 12px;
+            }
+
+            .extracted-text-label {
+                font-size: 10px;
+            }
+
+            .admin-button {
+                width: 38px;
+                height: 38px;
+                font-size: 16px;
+                top: 10px;
+                right: 10px;
+            }
+
+            .timer-display {
+                font-size: 13px;
+                padding: 5px;
+            }
+
+            .part-item {
+                padding: 10px;
+            }
+
+            .part-item-name {
+                font-size: 13px;
+            }
+
+            .part-item-detail {
+                font-size: 10px;
+            }
+
+            .toggle-switch {
+                padding: 12px;
+                margin: 15px 0;
+            }
+
+            .toggle-label {
+                font-size: 14px;
+            }
+
+            .admin-info {
+                padding: 10px;
+                font-size: 12px;
+            }
+
+            .form-input {
+                padding: 10px;
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .admin-form-button {
+                padding: 10px 16px;
+                font-size: 12px;
+                margin-right: 6px;
+            }
+
+            input[type="password"] {
+                font-size: 16px;
+                padding: 10px 10px;
+            }
+        }
+
+        /* Ultra small screens (320px and below) */
+        @media (max-width: 380px) {
+            .container {
+                padding: 6px 8px 12px 8px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .subtitle {
+                display: none;
+            }
+
+            .logo {
+                width: 32px;
+                height: 32px;
+            }
+
+            .screen {
+                padding: 10px 12px;
+            }
+
+            .camera-container {
+                height: 160px;
+                margin: 10px 0;
+            }
+
+            .video-placeholder {
+                height: 160px;
+                font-size: 10px;
+            }
+
+            .scan-counter-number {
+                font-size: 22px;
+            }
+
+            .flashlight-button {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .admin-button {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <img src="/static/tbs_icon.png" alt="TBS Logo" class="logo">
+            <div>
+                <h1>TBS Lot Scanner</h1>
+                <p class="subtitle">Job tracking and label verification</p>
+            </div>
+        </div>
+    </header>
+    <button class="admin-button" onclick="showLoginModal()" title="Admin Panel">⚙️</button>
+
+    <div class="container">
+        <!-- Screen 1: Job Code Entry -->
+        <div id="jobCodeScreen" class="screen active">
+            <div class="form-group">
+                <label for="jobCodeInput">Job Code</label>
+                <input type="text" id="jobCodeInput" placeholder="Enter job code" autocomplete="off">
+            </div>
+            <button onclick="loadJobData()">Load Job Data</button>
+        </div>
+
+        <!-- Screen 2: Part Selection -->
+        <div id="partSelectionScreen" class="screen">
+            <h2 style="margin-bottom: 20px; font-size: 18px;">Select Part</h2>
+            <div id="partsList" class="parts-list"></div>
+            <button class="btn-back" onclick="showScreen('jobCodeScreen')" style="margin-top: 20px;">Back</button>
+        </div>
+
+        <!-- Screen 3: Scanning -->
+        <div id="scanningScreen" class="screen">
+            <div class="part-info">
+                <div class="part-info-row">
+                    <span class="part-info-label">Part Name</span>
+                    <span class="part-info-value" id="displayPartName"></span>
+                </div>
+                <div class="part-info-row">
+                    <span class="part-info-label">Lot Number</span>
+                    <span class="part-info-value" id="displayLotNumber"></span>
+                </div>
+                <div class="part-info-row">
+                    <span class="part-info-label">Job Code</span>
+                    <span class="part-info-value" id="displayJobCode"></span>
+                </div>
+                <div class="part-info-row" id="timerRow" style="display: none;">
+                    <span class="part-info-label">Time Elapsed</span>
+                    <span class="timer-display" id="timerDisplay">00:00</span>
+                </div>
+            </div>
+
+            <div class="scan-counter">
+                <div class="scan-counter-number" id="scanCount">0</div>
+                <div class="scan-counter-label">Scans Completed</div>
+            </div>
+
+            <div class="camera-container">
+                <div class="attempt-indicator">
+                    <div class="attempt-dot active"></div>
+                    <div class="attempt-dot"></div>
+                    <div class="attempt-dot"></div>
+                </div>
+                <video id="cameraVideo" playsinline></video>
+                <div class="video-placeholder" id="videoPlaceholder" style="display: none;">
+                    Loading camera...
+                </div>
+                <button class="flashlight-button" id="flashlightButton" onclick="toggleFlashlight()" title="Toggle Flashlight">🔦</button>
+            </div>
+
+            <div class="capture-controls">
+                <button onclick="captureImage()">📸 Capture Image</button>
+            </div>
+
+            <div id="extractedTextContainer" style="display: none;">
+                <div class="extracted-text">
+                    <div class="extracted-text-label">Extracted Text</div>
+                    <div id="extractedText"></div>
+                </div>
+            </div>
+
+            <div id="manualEntryContainer" style="display: none;">
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 6px; padding: 12px; margin: 10px 0 15px 0; text-align: center;">
+                    <strong style="color: #856404;">📋 Maximum scan attempts reached</strong><br>
+                    <span style="color: #856404; font-size: 13px;">Please enter the lot number manually below</span>
+                </div>
+                <div class="form-group" style="margin-top: 0;">
+                    <label for="manualLotNumber">Manual Lot Number Entry</label>
+                    <input type="text" id="manualLotNumber" placeholder="Enter lot number manually">
+                </div>
+                <div class="action-buttons">
+                    <button onclick="submitManualEntry()" style="background: #27ae60; grid-column: 1 / -1;">✓ Submit Manual Entry</button>
+                </div>
+            </div>
+
+            <button class="btn-back" onclick="showScreen('partSelectionScreen')" style="margin-top: 20px;">Back to Parts</button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-icon">✓</div>
+            <div class="modal-title" id="successTitle">Success</div>
+            <div class="modal-message" id="successMessage">Operation completed successfully</div>
+            <button class="modal-button success" onclick="closeSuccessModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-icon">✕</div>
+            <div class="modal-title" id="errorTitle">Error</div>
+            <div class="modal-message" id="errorMessage">An error occurred</div>
+            <button class="modal-button error" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-title" style="margin-bottom: 20px;">Admin Login</div>
+            <div class="login-form">
+                <input type="text" id="loginUsername" class="form-input" placeholder="Username" autocomplete="off">
+                <input type="password" id="loginPassword" class="form-input" placeholder="Password">
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="admin-form-button" onclick="handleLogin()">Login</button>
+                    <button class="admin-form-button cancel" onclick="closeLoginModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminPanel" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-title" style="margin-bottom: 20px;">Admin Panel</div>
+            <div class="toggle-switch">
+                <span class="toggle-label">Enable Timer</span>
+                <label class="switch">
+                    <input type="checkbox" id="timerToggle" onchange="toggleTimer()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="admin-info">
+                <strong>Timer Status:</strong> <span id="timerStatusText">Disabled</span><br>
+                The timer will display the elapsed time since you started scanning each part.
+            </div>
+            <button class="admin-form-button" style="width: 100%; margin-top: 20px;" onclick="closeAdminPanel()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let currentJob = null;
+        let currentPart = null;
+        let currentScanCount = 0;
+        let capturedImageBase64 = null;
+        let currentStream = null;
+        let scanAttempts = {};
+        let scanProgress = {};
+        const MAX_ATTEMPTS = 3;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if (screenId === 'scanningScreen') {
+                startCamera();
+            } else {
+                stopCamera();
+            }
+            
+            // Reset job code screen button if going back to it
+            if (screenId === 'jobCodeScreen') {
+                const btn = document.querySelector('#jobCodeScreen button');
+                btn.disabled = false;
+                btn.textContent = 'Load Job Data';
+                document.getElementById('jobCodeInput').value = '';
+                document.getElementById('jobCodeInput').focus();
+            }
+        }
+
+        function showSuccessModal(title, message) {
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successModal').classList.add('show');
+            setTimeout(() => {
+                closeSuccessModal();
+            }, 2500);
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('show');
+            // After closing success modal, if still on scanning screen and timer is enabled,
+            // start a fresh timer for the next scan.
+            try {
+                const scanningActive = document.getElementById('scanningScreen').classList.contains('active');
+                if (scanningActive && timerEnabled) {
+                    // Reset start time and start timer anew
+                    timerStartTime = Date.now();
+                    startTimer();
+                }
+            } catch (e) {
+                // ignore if elements not available
+                console.error('Error restarting timer after success modal:', e);
+            }
+        }
+
+        function showErrorModal(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.add('show');
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.remove('show');
+        }
+
+        function updateAttemptIndicator(currentAttempt) {
+            const dots = document.querySelectorAll('.attempt-dot');
+            dots.forEach((dot, index) => {
+                if (index < currentAttempt) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        async function loadJobData() {
+            const jobCode = document.getElementById('jobCodeInput').value.trim();
+            
+            if (!jobCode) {
+                showErrorModal('Input Required', 'Please enter a job code');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Loading...';
+
+            try {
+                const response = await fetch('/api/get_job_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_code: jobCode })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showErrorModal('Load Failed', data.error || 'Failed to load data');
+                    btn.disabled = false;
+                    btn.textContent = 'Load Job Data';
+                    return;
+                }
+
+                currentJob = data;
+                displayParts(data.parts);
+                showScreen('partSelectionScreen');
+            } catch (error) {
+                showErrorModal('Network Error', error.message);
+                btn.disabled = false;
+                btn.textContent = 'Load Job Data';
+            }
+        }
+
+        function displayParts(parts) {
+            const partsList = document.getElementById('partsList');
+            partsList.innerHTML = parts.map(part => `
+                <div class="part-item" onclick="selectPart('${part.name}', '${part.id}', '${part.lot_number}')">
+                    <div class="part-item-name">${part.name}</div>
+                    <div class="part-item-detail">Lot: ${part.lot_number}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectPart(name, id, lotNumber) {
+            currentPart = { name, id, lot_number: lotNumber };
+            
+            const partKey = `${currentJob.job_code}-${id}`;
+            if (!scanProgress[partKey]) {
+                scanProgress[partKey] = 0;
+            }
+            if (!scanAttempts[partKey]) {
+                scanAttempts[partKey] = 0;
+            }
+            
+            currentScanCount = scanProgress[partKey];
+            
+            document.getElementById('displayPartName').textContent = name;
+            document.getElementById('displayLotNumber').textContent = lotNumber;
+            document.getElementById('displayJobCode').textContent = currentJob.job_code;
+            document.getElementById('scanCount').textContent = currentScanCount;
+            document.getElementById('extractedTextContainer').style.display = 'none';
+            document.getElementById('manualEntryContainer').style.display = 'none';
+            updateAttemptIndicator(1);
+            
+            showScreen('scanningScreen');
+        }
+
+        async function startCamera() {
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                const video = document.getElementById('cameraVideo');
+                video.srcObject = currentStream;
+                video.play();
+            } catch (error) {
+                showErrorModal('Camera Error', 'Camera access denied');
+                console.error('Camera error:', error);
+            }
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            // Turn off flashlight when stopping camera
+            if (isFlashlightOn) {
+                toggleFlashlight();
+            }
+        }
+
+        let isFlashlightOn = false;
+
+        async function toggleFlashlight() {
+            try {
+                if (!currentStream) {
+                    showErrorModal('Error', 'Camera must be active to use flashlight');
+                    return;
+                }
+
+                const videoTrack = currentStream.getVideoTracks()[0];
+                if (!videoTrack) {
+                    showErrorModal('Error', 'No video track available');
+                    return;
+                }
+
+                const settings = videoTrack.getSettings();
+                const capabilities = videoTrack.getCapabilities();
+
+                // Check if torch is supported
+                if (!capabilities || !capabilities.torch) {
+                    showErrorModal('Flashlight Not Supported', 'Your device does not support flashlight control');
+                    return;
+                }
+
+                // Toggle torch
+                isFlashlightOn = !isFlashlightOn;
+                await videoTrack.applyConstraints({
+                    advanced: [{ torch: isFlashlightOn }]
+                });
+
+                // Update button appearance
+                const button = document.getElementById('flashlightButton');
+                if (isFlashlightOn) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('Flashlight error:', error);
+                showErrorModal('Flashlight Error', 'Could not toggle flashlight: ' + error.message);
+                isFlashlightOn = false;
+                const button = document.getElementById('flashlightButton');
+                button.classList.remove('active');
+            }
+        }
+
+        function captureImage() {
+            // Prevent capture if button was disabled by max attempts
+            const captureBtnGuard = document.querySelector('.capture-controls button');
+            if (captureBtnGuard && (captureBtnGuard.disabled || captureBtnGuard.dataset.disabledByAttempts)) {
+                showErrorModal('Capture Disabled', 'Capture is disabled after maximum failed attempts. Please enter lot number manually.');
+                return;
+            }
+
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            if (canvas.width === 0) {
+                showErrorModal('Camera Error', 'Camera not ready, please wait');
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            capturedImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+            processImage();
+        }
+
+        async function processImage() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Processing...';
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const response = await fetch('/api/process_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: capturedImageBase64 })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await processExtractedText(data.extracted_text);
+                } else {
+                    showErrorModal('Processing Error', 'Failed to process image');
+                }
+            } catch (error) {
+                showErrorModal('Error', error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📸 Capture Image';
+            }
+        }
+
+        async function processExtractedText(text) {
+            document.getElementById('extractedText').textContent = text || '(No text found)';
+            document.getElementById('extractedTextContainer').style.display = 'block';
+            
+            const partKey = `${currentJob.job_code}-${currentPart.id}`;
+            scanAttempts[partKey]++;
+            updateAttemptIndicator(scanAttempts[partKey]);
+
+            const lotMatch = text.includes(currentPart.lot_number);
+            
+            if (lotMatch) {
+                await new Promise(resolve => setTimeout(resolve, 800));
+                await saveScan();
+            } else {
+                if (scanAttempts[partKey] >= MAX_ATTEMPTS) {
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    document.getElementById('extractedTextContainer').style.display = 'none';
+                    document.getElementById('manualEntryContainer').style.display = 'block';
+                    // Disable capture button when max attempts reached and mark it as disabled by attempts
+                    const captureBtn = document.querySelector('.capture-controls button');
+                    if (captureBtn) {
+                        captureBtn.disabled = true;
+                        captureBtn.style.pointerEvents = 'none';
+                        captureBtn.innerHTML = '📸 Capture Image (Disabled)';
+                        captureBtn.dataset.disabledByAttempts = '1';
+                        captureBtn.setAttribute('aria-disabled', 'true');
+                    }
+                    showErrorModal('Max Attempts', 'Maximum scan attempts reached. Please enter lot number manually.');
+                } else {
+                    showErrorModal('No Match', `Lot number not found (Attempt ${scanAttempts[partKey]}/${MAX_ATTEMPTS}). Please try again.`);
+                }
+            }
+        }
+
+        async function saveScan() {
+            try {
+                const response = await fetch('/api/save_scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        job_code: currentJob.job_code,
+                        part_name: currentPart.name,
+                        part_id: currentPart.id,
+                        lot_number: currentPart.lot_number,
+                        sequence: currentScanCount + 1
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const partKey = `${currentJob.job_code}-${currentPart.id}`;
+                    currentScanCount++;
+                    scanProgress[partKey] = currentScanCount;
+                    scanAttempts[partKey] = 0;
+                    
+                    document.getElementById('scanCount').textContent = currentScanCount;
+                    document.getElementById('extractedTextContainer').style.display = 'none';
+                    // Get elapsed time and show in success message
+                    const elapsedTime = getElapsedTime();
+                    let successMessage = 'Scan saved successfully. Ready for next scan.';
+                    if (elapsedTime && timerEnabled) {
+                        successMessage = `Scan saved successfully in ${elapsedTime}. Ready for next scan.`;
+                    }
+                    showSuccessModal('Scan Saved', successMessage);
+                    
+                    updateAttemptIndicator(1);
+                    capturedImageBase64 = null;
+                    
+                    // Stop timer on successful scan
+                    stopTimer();
+                    timerStartTime = null;
+                } else {
+                    showErrorModal('Save Failed', 'Failed to save scan');
+                }
+            } catch (error) {
+                showErrorModal('Error', error.message);
+            }
+        }
+
+        async function submitManualEntry() {
+            const manualLotNumber = document.getElementById('manualLotNumber').value.trim();
+            
+            if (manualLotNumber === currentPart.lot_number) {
+                try {
+                    const response = await fetch('/api/save_scan', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            job_code: currentJob.job_code,
+                            part_name: currentPart.name,
+                            part_id: currentPart.id,
+                            lot_number: currentPart.lot_number,
+                            sequence: currentScanCount + 1,
+                            manual_entry: true
+                        })
+                    });
+
+                    if (response.ok) {
+                        const partKey = `${currentJob.job_code}-${currentPart.id}`;
+                        currentScanCount++;
+                        scanProgress[partKey] = currentScanCount;
+                        scanAttempts[partKey] = 0;
+                        
+                        document.getElementById('scanCount').textContent = currentScanCount;
+                        document.getElementById('manualEntryContainer').style.display = 'none';
+                        document.getElementById('manualLotNumber').value = '';
+                        // Get elapsed time and show in success message
+                        const elapsedTime = getElapsedTime();
+                        let successMessage = 'Manual entry saved successfully.';
+                        if (elapsedTime && timerEnabled) {
+                            successMessage = `Manual entry saved successfully in ${elapsedTime}.`;
+                        }
+                        showSuccessModal('Manual Entry Saved', successMessage);
+                        
+                        updateAttemptIndicator(1);
+                        
+                        // Re-enable capture button and stop timer on success
+                        const captureBtn = document.querySelector('.capture-controls button');
+                        if (captureBtn) {
+                            captureBtn.disabled = false;
+                            captureBtn.innerHTML = '📸 Capture Image';
+                            delete captureBtn.dataset.disabledByAttempts;
+                            captureBtn.removeAttribute('aria-disabled');
+                            captureBtn.style.pointerEvents = 'auto';
+                        }
+                        stopTimer();
+                        timerStartTime = null;
+                    } else {
+                        showErrorModal('Save Failed', 'Failed to save manual entry');
+                    }
+                } catch (error) {
+                    showErrorModal('Error', error.message);
+                }
+            } else {
+                showErrorModal('Invalid Entry', 'Incorrect lot number entered');
+            }
+        }
+
+        function cancelManualEntry() {
+            document.getElementById('manualEntryContainer').style.display = 'none';
+            const partKey = `${currentJob.job_code}-${currentPart.id}`;
+            scanAttempts[partKey] = 0;
+            document.getElementById('manualLotNumber').value = '';
+            updateAttemptIndicator(1);
+            // Do NOT re-enable capture here - user must submit manual entry to re-enable
+            // The capture button remains disabled until manual submission
+        }
+
+        // ===== TIMER AND ADMIN PANEL FUNCTIONALITY =====
+        let timerEnabled = false;
+        let timerInterval = null;
+        let timerStartTime = null;
+
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+            document.getElementById('loginUsername').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('show');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (username === 'TBS' && password === 'TBS123') {
+                closeLoginModal();
+                showAdminPanel();
+            } else {
+                showErrorModal('Login Failed', 'Invalid username or password');
+            }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('adminPanel').classList.add('show');
+            document.getElementById('timerToggle').checked = timerEnabled;
+            updateTimerStatusText();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('show');
+        }
+
+        function toggleTimer() {
+            timerEnabled = document.getElementById('timerToggle').checked;
+            updateTimerStatusText();
+            
+            // If disabling timer, stop the timer
+            if (!timerEnabled && timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                document.getElementById('timerRow').style.display = 'none';
+            }
+            // If enabling timer and on scanning screen, start timer
+            else if (timerEnabled && document.getElementById('scanningScreen').classList.contains('active')) {
+                startTimer();
+            }
+        }
+
+        function updateTimerStatusText() {
+            const statusText = timerEnabled ? 'Enabled' : 'Disabled';
+            document.getElementById('timerStatusText').textContent = statusText;
+        }
+
+        function startTimer() {
+            if (!timerEnabled) return;
+            
+            document.getElementById('timerRow').style.display = 'flex';
+            timerStartTime = Date.now();
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            timerInterval = setInterval(() => {
+                if (!timerEnabled) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    return;
+                }
+
+                const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                const timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                document.getElementById('timerDisplay').textContent = timeString;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function getElapsedTime() {
+            if (!timerStartTime) return null;
+            const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Override selectPart to start timer when enabled and show timer row
+        const originalSelectPart = selectPart;
+        selectPart = function(name, id, lotNumber) {
+            originalSelectPart(name, id, lotNumber);
+            if (timerEnabled) {
+                document.getElementById('timerRow').style.display = 'flex';
+                startTimer();
+            } else {
+                document.getElementById('timerRow').style.display = 'none';
+            }
+        };
+
+        // Override showScreen to manage timer
+        const originalShowScreen = showScreen;
+        showScreen = function(screenId) {
+            if (screenId !== 'scanningScreen') {
+                stopTimer();
+                document.getElementById('timerRow').style.display = 'none';
+            }
+            originalShowScreen(screenId);
+        };
+
+        document.getElementById('jobCodeInput').focus();
+    </script>
+</body>
+</html>

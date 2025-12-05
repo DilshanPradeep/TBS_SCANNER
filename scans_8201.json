@@ -1,0 +1,71 @@
+{
+  "job_code": "8201",
+  "part_name": "75D/36F NIM SD Z TWIST POLYESTER DOPE DYED BLACK YARN",
+  "scans": [
+    {
+      "sequence": 1,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T09:47:16.847947"
+    },
+    {
+      "sequence": 2,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T09:47:38.186694"
+    },
+    {
+      "sequence": 1,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T09:54:36.169921"
+    },
+    {
+      "sequence": 2,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T09:55:36.053172"
+    },
+    {
+      "sequence": 1,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T09:59:54.842648"
+    },
+    {
+      "sequence": 1,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T10:03:53.870844"
+    },
+    {
+      "sequence": 1,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T10:18:29.266950"
+    },
+    {
+      "sequence": 2,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T10:18:43.229760"
+    },
+    {
+      "sequence": 1,
+      "job_id": "8201",
+      "part_id": "2361",
+      "lot_number": "02B7067H",
+      "timestamp": "2025-11-17T12:14:51.323123"
+    }
+  ],
+  "total_scans": 9,
+  "last_updated": "2025-11-17T12:14:51.467362"
+}
